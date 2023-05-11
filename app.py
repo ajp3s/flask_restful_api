@@ -28,7 +28,7 @@ class Video(Resource):
             args = parser.parse_args()
             new_video = {'title': args['title']}
             videos[video_id] = new_video
-            return {video_id: videos[video_id]}, 201
+            return {video_id: videos[video_id]}, 204
         else:
             abort(409, message=f'Video with title: {video_id} already exists')
 
