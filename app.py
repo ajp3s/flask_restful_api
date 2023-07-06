@@ -1,70 +1,64 @@
 from flask import Flask
 from flask_restful import Resource, Api, reqparse, abort
+from flask_sqlalchemy import SQLAlchemy
 
-app = Flask("VideoApi")
+app = Flask('ImageAPI')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://Tony:uniquepassword123@localhost/flask_restfull_api'
+db = SQLAlchemy(app)
 api = Api(app)
 
 parser = reqparse.RequestParser()
 parser.add_argument('title', required=True)
-parser.add_argument('upload date', type=int, required=False)
-
-videos = {
-    "video1": {"title": "Tony's adventures with flask", "upload date": 220221},
-    "video2": {"title": "It' not all that complicated", "upload date": 270221},
-    "video3": {"title": "You all can do it too", "upload date": 220223}
-}
+parser.add_argument('upload_date', type=int, required=False)
 
 
-class Video(Resource):
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100))
+    upload_date = db.Column(db.Integer)
 
+    def __init__(self, title, upload_date):
+        self.title = title
+        self.upload_date = upload_date
+
+
+db.create_all()
+
+
+class VideoResource(Resource):
     def get(self, video_id):
         if video_id == 'all':
-            return videos
+            videos = Video.query.all()
+            return {video.id: {'title': video.title, 'upload_date': video.upload_date} for video in videos}
         else:
-            return videos[video_id]
+            video = Video.query.get(video_id)
+            if video:
+                return {'title': video.title, 'upload_date': video.upload_date}
+            else:
+                abort(404, message=f'Video {video_id} not found')
 
     def put(self, video_id):
-        if video_id not in videos.keys():
+        video = Video.query.get(video_id)
+        if not video:
             args = parser.parse_args()
-            new_video = {'title': args['title']}
-            videos[video_id] = new_video
-            return {video_id: videos[video_id]}, 201
+            new_video = Video(title=args['title'], upload_date=args['upload_date'])
+            db.session.add(new_video)
+            db.session.commit()
+            return {'title': new_video.title, 'upload_date': new_video.upload_date}, 201
         else:
-            abort(409, message=f'Video with title: {video_id} already exists')
+            abort(409, message=f'Video {video_id} already exists')
 
     def delete(self, video_id):
-        if video_id in videos:
-            del videos[video_id]
+        video = Video.query.get(video_id)
+        if video:
+            db.session.delete(video)
+            db.session.commit()
             return '', 204
-
         else:
             abort(404, message=f'Video {video_id} not found')
 
 
-class VideoSchedule(Resource):
-    def get(self):
-        return videos
-
-    def post(self):
-        args = parser.parse_args()
-        new_video = {'title': args['title']}
-        video_id = max(int(x.lstrip("video")) for x in videos.keys()) + 1
-        video_id = f"video{video_id}"
-        videos[video_id] = new_video
-        return videos[video_id], 201
-
-    def delete(self, video_id):
-        if video_id in videos:
-            del videos[video_id]
-            return '', 204
-
-        else:
-            abort(404, message=f'Video {video_id} not found')
-
-
-api.add_resource(Video, '/videos/<video_id>')
-api.add_resource(VideoSchedule, '/videos')
-
+api.add_resource(VideoResource, '/videos/<video_id>')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
