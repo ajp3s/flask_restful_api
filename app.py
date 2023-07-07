@@ -1,3 +1,5 @@
+import os
+
 import werkzeug
 from flask import Flask
 from flask_restful import Resource, Api, reqparse, abort
@@ -11,8 +13,8 @@ api = Api(app)
 
 s3 = boto3.client(
     's3',
-    aws_access_key_id='AKIAXCPRBGPXVG57KHPM',
-    aws_secret_access_key='OA/Cn0KGtZgiPFh7H0EtXV7f2Qq8OuYv9b3QosDS'
+    aws_access_key_id=os.environ['YOUR_AWS_ACCESS_KEY_ID'],
+    aws_secret_access_key=os.environ['YOUR_AWS_SECRET_ACCESS_KEY']
 )
 bucket_name = 'ajp3s-bucket-1'
 
