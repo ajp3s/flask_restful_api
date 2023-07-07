@@ -16,7 +16,7 @@ s3 = boto3.client(
     aws_access_key_id=os.environ['YOUR_AWS_ACCESS_KEY_ID'],
     aws_secret_access_key=os.environ['YOUR_AWS_SECRET_ACCESS_KEY']
 )
-bucket_name = 'ajp3s-bucket-1'
+bucket_name = 'your_bucket_name'
 
 parser = reqparse.RequestParser()
 parser.add_argument('title', required=True)
